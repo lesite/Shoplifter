@@ -4,7 +4,7 @@ from shoplifter.core.config import PluginHost
 
 class TestPlugin(TestCase):
     def test_plugin_load(self):
-        pls = PluginHost('shoplifter')
+        pls = PluginHost('shoplifter', 'shoplifter.core')
         self.assertTrue('temp_storage' in pls.available_plugins.keys())
         self.assertFalse('temp_storage' in pls.loaded_plugins.keys())
 

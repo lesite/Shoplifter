@@ -23,7 +23,7 @@ setup(
     license = release.license,
 
     install_requires = [
-        'mongoengine>=0.5',
+        'mongoengine',
         'blinker',
         'marrow.util',
         'pycrypto',
@@ -38,6 +38,7 @@ setup(
     ],
 
     dependency_links = [
+        'https://github.com/lesite/mongoengine/tarball/master#egg=mongoengine',
         'https://github.com/unpluggd/pinocchio/tarball/0.2#egg=pinocchio-0.2',
     ],
 
@@ -48,11 +49,11 @@ setup(
 
     namespace_packages=['shoplifter'],
     entry_points={
-        'temp_storage': [
-            'memcache = shoplifter.core.tempstore:memcachestore',
-            'dummy = shoplifter.core.tempstore:dummystore',
+        'shoplifter.core.temp_storage': [
+            'memcache = shoplifter.core.tempstore:MemcacheStore',
+            'dummy = shoplifter.core.tempstore:DummyStore',
         ],
-        'payment_backends': [
+        'shoplifter.payment.payment_backends': [
             'dummypayment = shoplifter.payment.backend.modules:DummyBackend',
             'dummygiftcard = shoplifter.payment.backend.modules:DummyGiftCardBackend',
             'dummydebit = shoplifter.payment.backend.modules:DummyDebitCardBackend',
@@ -72,4 +73,3 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
 )
-
