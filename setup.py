@@ -51,7 +51,12 @@ setup(
         'temp_storage': [
             'memcache = shoplifter.core.tempstore:memcachestore',
             'dummy = shoplifter.core.tempstore:dummystore',
-        ]
+        ],
+        'payment_backends': [
+            'dummypayment = shoplifter.payment.backend.modules:DummyBackend',
+            'dummygiftcard = shoplifter.payment.backend.modules:DummyGiftCardBackend',
+            'dummydebit = shoplifter.payment.backend.modules:DummyDebitCardBackend',
+        ],
     },
 
     classifiers = [
