@@ -7,8 +7,6 @@ __all__ = ['Cipher']
 
 
 class Cipher(object):
-    """ Configures the encryption system and makes it available for
-    the payment module to use. """
     def __init__(self, key):
         self.key = key
 

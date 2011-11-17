@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Monkeypatching memcache client to use mockcache instead.
+import memcache
+import mockcache
+memcache.Client = mockcache.Client
+
 import decimal
 from pkg_resources import load_entry_point
 
