@@ -2,7 +2,7 @@
 
 import mongoengine as db
 
-from shoplifter.catalog import utils
+from shoplifter.core import utils
 
 
 class Product(db.Document):

@@ -1,6 +1,10 @@
+# encoding: utf-8
+
 import re
 import unicodedata
 
+
+__all__ = ['force_unicode', 'slugify']
 
 
 def force_unicode(value, encoding='utf-8', errors='strict'):
@@ -11,12 +15,10 @@ def force_unicode(value, encoding='utf-8', errors='strict'):
     the given encoding and errors strategy.  If it has a
     __unicode__ method, it will call that, otherwise it will
     call str() on the value and then convert that to unicode.
-
-    Inspired by Django's force_unicode.
     """
     if isinstance(value, unicode):
         u = value
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         u = value.decode(encoding, errors)
     else:
         if hasattr(value, '__unicode__'):
@@ -36,8 +38,6 @@ def slugify(value, limit=None):
     and converts spaces to hyphens.
 
     Can be limited to a certain length.
-    
-    Inspired by Django's slugify function.
     """
     if not value:
         return u''

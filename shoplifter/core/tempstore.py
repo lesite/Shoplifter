@@ -1,5 +1,5 @@
 import memcache
-from shoplifter.core.cipher import Cipher
+from shoplifter.core.utils import Cipher
 
 
 class TempStore(object):
