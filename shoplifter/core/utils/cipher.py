@@ -1,4 +1,9 @@
+# encoding: utf-8
+
 from Crypto.Cipher import AES
+
+
+__all__ = ['Cipher']
 
 
 class Cipher(object):
