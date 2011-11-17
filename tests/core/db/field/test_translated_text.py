@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from unittest import TestCase
+from nose.tools import *
 import mongoengine as db
 
 from shoplifter.core.db.field import TranslatedStringField
@@ -8,6 +8,16 @@ from shoplifter.core.db.field import TranslatedString
 from mongoengine import *
 from mongoengine.base import ValidationError
 from ludibrio import Stub
+
+
+db.connect(db='mongoenginetest')
+
+
+def setup():
+    TranslatedDoc.drop_collection()
+    doc = TranslatedDoc(text=translated_string)
+    doc.save()
+
 
 with Stub() as get_lang:
     from shoplifter.core.db.field import get_lang
@@ -25,32 +35,25 @@ translated_string = dict(
     )
 
 
-class TestTanslatedTextOperations(TestCase):
+class TestTanslatedTextOperations(object):
     def setUp(self):
-        db.connect(db='mongoenginetest')
-        TranslatedDoc.drop_collection()
-        doc = TranslatedDoc(text=translated_string)
-        doc.save()
+        pass
 
     def test_default_values(self):
         doc = TranslatedDoc.objects.all()[0]
-
-        self.assertEqual(unicode(doc.text), translated_string['en'])
+        assert_equal(unicode(doc.text), translated_string['en'])
 
     def test_query_translated_string(self):
         en = TranslatedDoc.objects(text__en=u'This is English')
         se = TranslatedDoc.objects(text__se__exists=True)
-
-        self.assertTrue(en.count() == 1)
-        self.assertTrue(se.count() == 1)
+        assert_true(en.count() == 1)
+        assert_true(se.count() == 1)
 
     def test_query_translated_string_not_found(self):
         fr = TranslatedDoc.objects(text__fr__exists=True)
-
-        self.assertTrue(fr.count() == 0)
+        assert_true(fr.count() == 0)
 
     def test_valide_translated_string(self):
         doc = TranslatedDoc.objects.all()[0]
-
-        self.assertTrue(isinstance(doc.text, TranslatedString))
-        self.assertEqual(doc.text['se'], translated_string['se'])
+        assert_true(isinstance(doc.text, TranslatedString))
+        assert_equal(doc.text['se'], translated_string['se'])

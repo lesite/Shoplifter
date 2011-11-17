@@ -18,9 +18,12 @@ def get_lang():
 class TranslatedString(BaseDict):
     def __unicode__(self):
         langs = get_lang()
-        for lang in langs:
-            if lang in self:
-                return self[lang]
+        if isinstance(langs, basestring):
+            return self.get(langs, u"NO TRANSLATION FOUND")
+        else:
+            for lang in langs:
+                if lang in self:
+                    return self[lang]
 
         return u"NO TRANSLATION FOUND"
 
