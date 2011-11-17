@@ -6,7 +6,7 @@ memcache.Client = mockcache.Client
 
 from shoplifter.core.tempstore import (
     TempStore, MemcacheStore, DummyStore)
-from shoplifter.core.cipher import Cipher
+from shoplifter.core.util import Cipher
 from unittest import TestCase
 from nose.tools import assert_equals, assert_raises
 
