@@ -20,7 +20,7 @@ class MoneyField(IntField):
         return self.to_python(value)
 
     def to_python(self, value):
-        return decimal.Decimal(value) / (10 ** self.decimal_digits)
+        return decimal.Decimal(str(value)) / (10 ** self.decimal_digits)
 
     def to_mongo(self, value):
         return int(
