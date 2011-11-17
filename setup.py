@@ -35,6 +35,7 @@ setup(
         'nose',
         'coverage',
         'pinocchio==0.2',
+        'ludibrio',
     ],
 
     dependency_links = [
