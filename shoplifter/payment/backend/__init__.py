@@ -55,6 +55,7 @@ class BaseBackend(object):
     def confirm(self, authorization, amount=None):
         if not amount:
             amount = authorization.amount
+
         auth_capture = self.capture_class(
             transaction_id=self.gen_transaction_id(
                 authorization.order_id, prefixes=['confirm', ]),
@@ -62,6 +63,7 @@ class BaseBackend(object):
             amount=amount,
             processed=True,
             backend_key=self.name)
+
         auth_capture.save()
         authorization.captured = True
         authorization.authorization_capture = auth_capture
