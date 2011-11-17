@@ -1,3 +1,9 @@
+import memcache
+import mockcache
+
+# Monkeypatching memcache client to use mockcache instead.
+memcache.Client = mockcache.Client
+
 from shoplifter.core.tempstore import (
     TempStore, MemcacheStore, DummyStore)
 from shoplifter.core.cipher import Cipher
