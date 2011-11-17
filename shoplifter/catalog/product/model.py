@@ -2,7 +2,7 @@
 
 import mongoengine as db
 
-from shoplifter.core import utils
+from shoplifter.core import util
 
 
 class Product(db.Document):
@@ -24,8 +24,8 @@ class Product(db.Document):
     # url
     # absolute_url
 
-    # inject the utils.slugify method as a static method
-    slugify = staticmethod(utils.slugify)
+    # inject the util slugify method as a static method
+    slugify = staticmethod(util.slugify)
 
     @classmethod
     def pre_save(cls, sender, document, **kwargs):

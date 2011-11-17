@@ -1,7 +1,7 @@
 from shoplifter.core.config import PluginHost
 
 from unittest import TestCase
-from nose.tools import assert_equals, assert_is_instance
+from ..helpers import *
 
 
 class PluginSpecs(TestCase):
@@ -48,5 +48,5 @@ class PluginSpecs(TestCase):
         # pkg_resources.DistributionNotFound
         pls = PluginHost('herp_a_derp')
         assert_is_instance(pls, PluginHost)
-        assert(len(pls.available_plugins) == 0)
-        assert(len(pls.loaded_plugins) == 0)
+        assert_equal(len(pls.available_plugins), 0)
+        assert_equal(len(pls.loaded_plugins), 0)

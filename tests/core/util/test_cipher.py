@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from unittest import TestCase
-from shoplifter.core.cipher import Cipher
+from shoplifter.core.util import Cipher
 
 
 class CipherCase(TestCase):
