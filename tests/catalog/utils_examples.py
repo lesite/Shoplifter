@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from shoplifter.catalog.utils import force_unicode, slugify
+from shoplifter.core.utils import force_unicode, slugify
 
 from ..helpers import *
 
