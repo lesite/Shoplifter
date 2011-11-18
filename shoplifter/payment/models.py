@@ -159,6 +159,10 @@ class Payment(BaseTransaction):
     csc_result = IntField()
     avs_result = EmbeddedDocumentField(AVSData)
 
+    @classmethod
+    def get_capture_class(cls):
+        return None
+
     def process(self):
         return self.backend.purchase(self)
 
@@ -183,14 +187,35 @@ class Authorization(Payment):
     capture is a reference to the AuthorizationCapture transaction.
     """
 
-    captured = BooleanField()
     authorization_capture = ReferenceField(AuthorizationCapture)
+
+    @classmethod
+    def get_capture_class(cls):
+        # Inspect model to find the authorization capture document
+        # class.
+        return cls._fields['authorization_capture'].document_type_obj
+
+    def create_capture(self, trn_id, amount, backend_name):
+        """
+        This is called by the BaseBackend as the first steps of
+        creating an authorization capture.
+        """
+        capture = AuthorizationCapture(
+            transaction_id=trn_id,
+            order_id=self.order_id,
+            amount=amount,
+            processed=False,
+            backend_key=backend_name)
+        capture.save()
+        self.authorization_capture = capture
+        self.save()
+        return capture
 
     def process(self):
         return self.backend.authorize(self)
 
-    def capture(self):
-        return self.backend.confirm(self, self.amount)
+    def capture(self, force=False):
+        return self.backend.confirm(self, self.amount, force)
 
 
 class Cancellation(BaseTransaction):

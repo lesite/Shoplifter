@@ -16,8 +16,8 @@ class TempStore(object):
     def store(self, key, data, time, encrypted=False):
         raise NotImplementedError
 
-
-dummy_store = {}
+    def delete(self, key):
+        raise NotImplementedError
 
 
 class DummyStore(TempStore):
@@ -25,13 +25,14 @@ class DummyStore(TempStore):
     Simple Dummy Store backend that stores data in the dummy_store
     dictionary.
     """
+    dummy_store = {}
 
     def __init__(self, location, key, cipher=Cipher):
         super(DummyStore, self).__init__(key, cipher)
 
     def get(self, key):
         try:
-            data = dummy_store[key]
+            data = self.dummy_store[key]
         except KeyError:
             return None
         if data[1]:
@@ -43,7 +44,10 @@ class DummyStore(TempStore):
             to_store = self.cipher.encrypt(data), encrypted
         else:
             to_store = data, encrypted
-        dummy_store[key] = to_store
+        self.dummy_store[key] = to_store
+
+    def delete(self, key):
+        self.dummy_store.pop(key)
 
 
 class MemcacheStore(TempStore):
@@ -72,3 +76,6 @@ class MemcacheStore(TempStore):
         else:
             to_store = data, encrypted
         self.client.set(key, to_store, time)
+
+    def delete(self, key):
+        self.client.delete(key)

@@ -37,7 +37,7 @@ class DummyBackend(BaseBackend):
         return payment
 
     def purchase(self, payment):
-        super(DummyBackend, self).purchase(payment)
+        payment.processed = True
 
         # Get gateway order id to retrive CC.
         transaction_id = payment.transaction_id.encode('utf8')
@@ -73,12 +73,10 @@ class DummyBackend(BaseBackend):
 
         return payment.success
 
-    def authorize(self, auth):
-        super(DummyBackend, self).authorize(auth)
+    def authorize(self, authorization):
+        authorization.processed = True
 
-        # auth.transaction_id is a StringField which is
-        # unicode. Need to convert because memcached handles str type.
-        transaction_id = auth.transaction_id.encode('utf8')
+        transaction_id = authorization.transaction_id.encode('utf8')
 
         # Get credit card from encrypted temp storage.
         cc = self.credential_class.get(transaction_id)
@@ -97,22 +95,51 @@ class DummyBackend(BaseBackend):
             avs_postal_match=True,
             avs_address_match=True,
             )
-        auth.avs_result = avs_res
+        authorization.avs_result = avs_res
 
         # Set csc result (which is usually an integer coming from
         # payment gateway
-        auth.csc_result = 1
+        authorization.csc_result = 1
 
         # Auth is successful!
-        auth.success = True
+        authorization.success = True
 
         # Save in DB.
-        auth.save()
+        authorization.save()
 
-        return auth.success
+        return authorization.success
 
-    def confirm(self, authorization, amount=None):
-        return super(DummyBackend, self).confirm(authorization, amount)
+    def confirm(self, authorization, amount=None, force=False):
+        """
+        authorization : The authorization object to confirm.
+        amount : The amount to confirm (most likely the pre-auth
+            amount)
+        force : if a capture exists but is not yet processed, this
+            could mean that something went wrong or that another
+            instance is already trying to capture. Force will ignore
+            this fact and attempt to capture anyways.
+        """
+        # Prepare data.
+        if not amount:
+            amount = authorization.amount
+
+        trn_id = self.gen_transaction_id(
+                authorization.order_id)
+
+        # Perform a few checks:
+        capture = authorization.authorization_capture
+        if not capture:
+            capture = authorization.create_capture(trn_id, amount, self.name)
+        elif capture and ((not capture.processed and not force)
+                          or capture.processed):
+            raise self.CaptureAlreadyExists
+
+        # Create capture
+
+        capture.processed = True
+        capture.success = True
+        capture.save()
+        return capture
 
 
 class DummyDebitCardBackend(BaseBackend):
@@ -154,10 +181,8 @@ class DummyDebitCardBackend(BaseBackend):
         return payment
 
     def purchase(self, payment):
-        super(DummyGiftCardBackend, self).purchase(payment)
+        payment.processed = True
 
-        # auth.transaction_id is a StringField which is
-        # unicode. Need to convert because memcached handles str type.
         transaction_id = payment.transaction_id.encode('utf8')
         dc = self.credential_class.get(transaction_id)
         if not dc:
@@ -166,7 +191,7 @@ class DummyDebitCardBackend(BaseBackend):
         payment.save()
         return True
 
-    def authorize(self, auth):
+    def authorize(self, authorization):
         raise TransactionTypeNotSupported
 
 
@@ -201,10 +226,8 @@ class DummyGiftCardBackend(BaseBackend):
         return payment
 
     def purchase(self, payment):
-        super(DummyGiftCardBackend, self).purchase(payment)
+        payment.processed = True
 
-        # auth.transaction_id is a StringField which is
-        # unicode. Need to convert because memcached handles str type.
         transaction_id = payment.transaction_id.encode('utf8')
         gc = self.credential_class.get(transaction_id)
         if not gc:
@@ -213,15 +236,45 @@ class DummyGiftCardBackend(BaseBackend):
         payment.save()
         return True
 
-    def authorize(self, auth):
-        super(DummyGiftCardBackend, self).authorize(auth)
+    def authorize(self, authorization):
+        authorization.processed = True
 
-        # auth.transaction_id is a StringField which is
-        # unicode. Need to convert because memcached handles str type.
-        transaction_id = auth.transaction_id.encode('utf8')
+        transaction_id = authorization.transaction_id.encode('utf8')
         gc = self.credential_class.get(transaction_id)
         if not gc:
             raise self.WaitedTooLong()
-        auth.success = True
-        auth.save()
+        authorization.success = True
+        authorization.save()
         return True
+
+    def confirm(self, authorization, amount=None, force=False):
+        """
+        authorization : The authorization object to confirm.
+        amount : The amount to confirm (most likely the pre-auth
+            amount)
+        force : if a capture exists but is not yet processed, this
+            could mean that something went wrong or that another
+            instance is already trying to capture. Force will ignore
+            this fact and attempt to capture anyways.
+        """
+        # Prepare data.
+        if not amount:
+            amount = authorization.amount
+
+        trn_id = self.gen_transaction_id(
+                authorization.order_id)
+
+        # Perform a few checks:
+        capture = authorization.authorization_capture
+        if not capture:
+            capture = authorization.create_capture(trn_id, amount, self.name)
+        elif capture and ((not capture.processed and not force)
+                          or capture.processed):
+            raise self.CaptureAlreadyExists
+
+        # Create capture
+
+        capture.processed = True
+        capture.success = True
+        capture.save()
+        return capture

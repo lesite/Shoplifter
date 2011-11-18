@@ -152,13 +152,16 @@ class OrderApi(object):
     def process_all_payments(self):
         """ TODO: Exception Handling """
         payments = self.get_payments(processed=False)
+        payments = sorted(payments, key=lambda x: x.processing_order)
         for payment in payments:
             payment.process()
 
-    def capture_all_authorizations(self):
+    def capture_all_authorizations(self, force_capture=False):
         """ TODO: Exception Handling """
         payments = self.get_payments(processed=True)
+        payments = sorted(payments, key=lambda x: x.processing_order)
         for p in payments:
             if p.backend.use_pre_auth:
-                if not p.captured:
-                    p.capture()
+                capture = p.authorization_capture
+                if not capture or (capture and not capture.processed):
+                    p.capture(force=force_capture)
