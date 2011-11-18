@@ -1,4 +1,11 @@
+# encoding: utf-8
+
+import mongoengine as db
+import functools
 from nose.tools import *
+
+
+assert_invalid = functools.partial(assert_raises, db.ValidationError)
 
 
 def assert_is_instance(inst, cls):
