@@ -34,6 +34,7 @@ setup(
         'coverage',
         'pinocchio==0.2',
         'mockcache',
+        'ludibrio',
     ],
 
     dependency_links = [
