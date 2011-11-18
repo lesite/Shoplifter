@@ -6,21 +6,19 @@ import sys
 
 from setuptools import setup, find_packages
 
-from shoplifter import release
-
 
 if sys.version_info < (2, 6):
     raise SystemExit("Python 2.6 or later is required.")
 
 
 setup(
-    name = release.name,
-    version = release.version,
-    description = release.description,
-    author = release.author,
-    author_email = release.email,
-    url = release.url,
-    license = release.license,
+    name = "shoplifter",
+    version = '0.0.1',
+    description = 'Shoplifter e-Commerce',
+    author = 'Le Site, Inc',
+    author_email = '',
+    url = "http://github.com/lesite/Shoplifter",
+    license = 'LGPL',
 
     install_requires = [
         'mongoengine',
@@ -43,7 +41,7 @@ setup(
         'https://github.com/unpluggd/pinocchio/tarball/0.2#egg=pinocchio-0.2',
     ],
 
-    packages = find_packages(exclude=['examples', 'tests']),
+    packages = find_packages(exclude=['examples', 'tests', 'features']),
     zip_safe = True,
     include_package_data = True,
     package_data = {'': ['README.textile', 'LICENSE']},
