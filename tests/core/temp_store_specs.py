@@ -1,7 +1,6 @@
+# Monkeypatching memcache client to use mockcache instead.
 import memcache
 import mockcache
-
-# Monkeypatching memcache client to use mockcache instead.
 memcache.Client = mockcache.Client
 
 from shoplifter.core.tempstore import (
@@ -29,8 +28,8 @@ class TempStoreSpecs(TestCase):
 
         sample = SampleStore('1234567890123456', Cipher)
         assert_raises(NotImplementedError, sample.get, *(None, ))
-        assert_raises(
-            NotImplementedError, sample.store, *(None, None, None, None))
+        assert_raises(NotImplementedError, sample.store, *(None, None, None, None))
+        assert_raises(NotImplementedError, sample.delete, *(None, ))
 
     def test_memcache_store(self):
         key1 = 'testkey1'
@@ -43,6 +42,8 @@ class TempStoreSpecs(TestCase):
         assert_equals(store.get(key1), value)
         assert_equals(store.get(key2), value)
         assert_equals(store.get('nothing'), None)
+        store.delete(key1)
+        assert_equals(store.get(key1), None)
 
     def test_dummy_store(self):
         key1 = 'testkey1'
@@ -55,3 +56,5 @@ class TempStoreSpecs(TestCase):
         assert_equals(store.get(key1), value)
         assert_equals(store.get(key2), value)
         assert_equals(store.get('nothing'), None)
+        store.delete(key1)
+        assert_equals(store.get(key1), None)

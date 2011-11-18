@@ -1,57 +1,57 @@
 # -*- coding: utf-8 -*-
 
-from unittest import TestCase
+from nose.tools import assert_equals
 from shoplifter.core.util import Cipher
 
 
-class CipherCase(TestCase):
-    def setUp(self):
+class CipherSpecs(object):
+    def setup(self):
         self.cipher = Cipher('testkey123456789')
 
-    def test_cipher_string(self):
+    def can_encrypt_a_string(self):
         original = 'derp herp'
         expected_encrypted = 'a89d1d6f224e8f2a3c'
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(original, decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(original, decrypted)
 
-    def test_cipher_unicode(self):
+    def can_encrypt_a_unicode_string(self):
         original = u'Mêlé comme ça.'
         expected_encrypted = '81df5bd6334f72c3767487febb58c4c456'
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(original, decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(original, decrypted)
 
-    def test_cipher_dict(self):
+    def can_encrypt_a_dictionary(self):
         original = {1: 'derp herp'}
         expected_encrypted = {1: 'a89d1d6f224e8f2a3c'}
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(original, decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(original, decrypted)
 
-    def test_cipher_list(self):
+    def can_encrypt_a_list(self):
         original = ['derp herp', ]
         expected_encrypted = ['a89d1d6f224e8f2a3c', ]
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(list(original), decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(list(original), decrypted)
 
-    def test_cipher_tuple(self):
+    def can_encrypt_tuple(self):
         original = ('derp herp', )
         expected_encrypted = ('a89d1d6f224e8f2a3c', )
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(original, decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(original, decrypted)
 
-    def test_cipher_tuple_with_int(self):
+    def can_encrypt_a_tuple_containing_integer(self):
         original = ('derp herp', 2)
         expected_encrypted = ('a89d1d6f224e8f2a3c', 2)
         encrypted = self.cipher.encrypt(original)
         decrypted = self.cipher.decrypt(encrypted)
-        self.assertEquals(encrypted, expected_encrypted)
-        self.assertEquals(original, decrypted)
+        assert_equals(encrypted, expected_encrypted)
+        assert_equals(original, decrypted)

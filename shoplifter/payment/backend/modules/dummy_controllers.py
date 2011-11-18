@@ -1,6 +1,6 @@
 try:
     from web.core import RESTMethod, Controller
-    from web.http import HTTPNotFound
+    from web.core.http import HTTPNotFound
 except ImportError:
     enable_controllers = False
     DummyDebitLookup = None

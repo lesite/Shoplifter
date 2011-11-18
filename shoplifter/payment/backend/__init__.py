@@ -14,7 +14,6 @@ class BaseBackend(object):
 
     credential_class = CreditCard
     addressee_class = Addressee
-    capture_class = AuthorizationCapture
     payment_class = Payment
     avs_class = AVSData
     name = 'basebackend'
@@ -28,67 +27,42 @@ class BaseBackend(object):
     def gen_transaction_id(self, order_id, prefixes=[]):
         """This returns an order_id that's built using the prefixes,
         the order_id and the transaction count."""
+
+        capture_class = self.payment_class.get_capture_class()
+
         prefix = '_'.join(prefixes)
         count = (
-            self.payment_class.objects.filter(order_id=order_id).count()
-            +
-            self.capture_class.objects.filter(order_id=order_id).count())
+            self.payment_class.objects.filter(order_id=order_id).count())
+
+        # There should only be a capture class if this is an Authorization.
+        if capture_class:
+            count += (
+                capture_class.objects.filter(order_id=order_id).count())
+
         trn_id = '%s_%s_%s_%d' % (
             self.name, prefix, str(order_id), count)
         return trn_id
 
     def purchase(self, payment):
-        """ Returns a payment object """
-        payment.processed = True
-        payment.save()
-        return payment
+        raise NotImplementedError
 
-    def authorize(self, auth):
-        """ This processed an authorizatons against payment
-        gateway. First it needs to set processed to True, so if the
-        authorization succeeds, it cannot be processed
-        twice, and if it fails, another one needs to be created. """
-        auth.processed = True
-        auth.save()
-        return auth
+    def authorize(self, authorization):
+        raise NotImplementedError
 
-    def confirm(self, authorization, amount=None):
-        if not amount:
-            amount = authorization.amount
-
-        auth_capture = self.capture_class(
-            transaction_id=self.gen_transaction_id(
-                authorization.order_id, prefixes=['confirm', ]),
-            order_id=authorization.order_id,
-            amount=amount,
-            processed=True,
-            backend_key=self.name)
-
-        auth_capture.save()
-        authorization.captured = True
-        authorization.authorization_capture = auth_capture
-        authorization.save()
-        return auth_capture
+    def confirm(self, authorization, amount=None, force=False):
+        raise NotImplementedError
 
     def cancel(self, authorization):
-        """ Returns a cancellation object """
-        pass
+        raise NotImplementedError
 
-    def refund(self, order):
-        """ Returns a refund object """
-        pass
+    def refund(self, payment):
+        raise NotImplementedError
 
-    def verify(self, order):
+    class CaptureAlreadyExists(Exception):
         """
-        Returns True or False, depending on backend, this may
-        record a 0.01$ transaction. This is used to verify the credit
-        card details.
+        This is raised when an authorizatioin capture already exists
+        for a given authorization.
         """
-        pass
-
-    def prepare_payment(self, *args, **kwargs):
-        """ This prepares the authorization. """
-        pass
 
     class WaitedTooLong(Exception):
         """

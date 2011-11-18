@@ -28,6 +28,7 @@ setup(
         'marrow.util',
         'pycrypto',
         'python-memcached',
+        'webcore',
     ],
 
     test_suite='nose.collector',
