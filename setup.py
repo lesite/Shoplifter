@@ -13,7 +13,7 @@ if sys.version_info < (2, 6):
 
 setup(
     name = "shoplifter",
-    version = '0.0.1',
+    version = '0.0.2',
     description = 'Shoplifter e-Commerce',
     author = 'Le Site, Inc',
     author_email = '',
