@@ -18,7 +18,7 @@ class PaymentCredential(object):
                 sum(divmod(d * 2, 10)) for d in num[-2::-2]]) % 10 == 0
 
     @staticmethod
-    def get(self, transaction_id):
+    def get(transaction_id):
         raise NotImplementedError
 
     def save(self):

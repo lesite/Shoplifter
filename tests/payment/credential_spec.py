@@ -5,7 +5,9 @@ import mongoengine
 from unittest import TestCase
 from shoplifter.payment import config
 from shoplifter.core import plugins as core_plugins
-from shoplifter.payment.lib.credentials import CreditCard
+from shoplifter.payment.lib.credentials import (
+    CreditCard, GiftCard, DebitCard, PaymentCredential)
+from nose.tools import assert_equals, assert_raises
 
 
 mongoengine.connect('testdb6')
@@ -17,6 +19,24 @@ class CredentialSpecs(TestCase):
         core_plugins.load('temp_storage', 'dummy', None, 'thisisakey123456')
         config.temp_store = core_plugins['temp_storage'].dummy
 
+    def it_fails_when_badly_implemented(self):
+        class BadCredential(PaymentCredential):
+            pass
+
+        assert_raises(NotImplementedError, BadCredential().get,
+                      *('some_id', ))
+        assert_raises(NotImplementedError, BadCredential().save)
+
+    def it_fails_when_luhn_fails(self):
+        assert_raises(
+            PaymentCredential.CardFormatError, 
+            CreditCard,
+            *('derp1', '4242424242424241'))
+        assert_raises(
+            PaymentCredential.CardFormatError, 
+            DebitCard,
+            *('derp1', '4242424242424241'))
+
     def test_luhn_validation(self):
         # Check that luhn check fails early when instantiating a CC
         badluhn = {
@@ -27,7 +47,7 @@ class CredentialSpecs(TestCase):
             'csc': '770',
             'cc_type': 'V'}
 
-        self.assertRaises(
+        assert_raises(
             CreditCard.CardFormatError,
             CreditCard,
             **badluhn)
@@ -45,8 +65,8 @@ class CredentialSpecs(TestCase):
 
         # Retrieves it and checks it still has data.
         cc = CreditCard.get('derp')
-        self.assertEquals(cc.number, '4530911622722220')
+        assert_equals(cc.number, '4530911622722220')
 
         # Checks that passing bad key returns None
         cc = CreditCard.get('fail')
-        self.assertEquals(cc, None)
+        assert_equals(cc, None)
