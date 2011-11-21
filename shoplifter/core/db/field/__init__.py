@@ -26,6 +26,9 @@ class TranslatedString(BaseDict):
                     return self[lang]
 
         return u"NO TRANSLATION FOUND"
+    
+    def __str__(self):
+        return self.__unicode__()
 
 
 class TranslatedStringField(DictField):
