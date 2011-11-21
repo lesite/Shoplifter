@@ -5,7 +5,8 @@ from shoplifter.core import plugins as core_plugins
 from shoplifter.payment.lib.test_helpers import TestOrder
 from shoplifter.payment import plugins
 from shoplifter.payment import config
-from shoplifter.payment.models import Authorization, Payment
+from shoplifter.payment.models import (
+    Authorization, Payment, Addressee, BaseTransaction)
 from shoplifter.payment.backend import BaseBackend
 from shoplifter.payment.backend.modules.dummy import TransactionTypeNotSupported
 
@@ -16,6 +17,16 @@ mongoengine.connect('testdb6')
 
 def get_order(amount=decimal.Decimal('30')):
     return TestOrder(amount)
+
+
+class TestAddressee(object):
+    def it_gets_an_address_from_order_if_available(self):
+        order = get_order()
+        addressee = Addressee.from_order_address(order.billing)
+        assert_equals(addressee.first_name, 'Benoit')
+        order.billing = None
+        addressee = Addressee.from_order_address(order.billing)
+        assert(not addressee)
 
 
 class BackendPaymentApiSpec(object):
@@ -55,12 +66,6 @@ class BackendPaymentApiSpec(object):
         pay = self.backend.prepare_payment(*args, **kwargs)
         return pay
 
-    def process_payment(self, payment):
-        if self.backend.use_pre_auth:
-            self.backend.authorize(payment)
-        else:
-            self.backend.purchase(payment)
-
     def load_backend(self, use_pre_auth, plugin='dummypayment'):
         # use_preauth defines whether the backend uses
         # pre-authorization (True) or one-time capture (False).
@@ -79,7 +84,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(True)
         order = get_order()
         auth = self.prepare_payment(order, '30')
-        self.process_payment(auth)
+        auth.process()
         auth.create_capture(
             self.backend.gen_transaction_id(order.id),
             decimal.Decimal('30'),
@@ -101,7 +106,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(True, 'dummygiftcard')
         order = get_order()
         auth = self.prepare_payment(order, '30')
-        self.process_payment(auth)
+        auth.process()
         auth.create_capture(
             self.backend.gen_transaction_id(order.id),
             decimal.Decimal('30'),
@@ -115,6 +120,12 @@ class BackendPaymentApiSpec(object):
         assert_equals(
             order.payment.get_captured_amount(), decimal.Decimal('30'))
 
+    def test_transaction_fails_when_badly_implemented(self):
+        class BadBackend(BaseTransaction):
+            pass
+
+        assert_raises(NotImplementedError, BadBackend().process)
+
     def it_fails_authorizing_when_cc_not_in_cache(self):
         self.load_backend(True)
         order = get_order()
@@ -126,7 +137,7 @@ class BackendPaymentApiSpec(object):
         # Now processing fails.
         assert_raises(
             self.backend.WaitedTooLong,
-            self.process_payment, *(auth, ))
+            auth.process)
 
     def it_fails_purchasing_when_cc_not_in_cache(self):
         self.load_backend(False)
@@ -139,7 +150,7 @@ class BackendPaymentApiSpec(object):
         # Now processing fails.
         assert_raises(
             self.backend.WaitedTooLong,
-            self.process_payment, *(auth, ))
+            auth.process)
 
     def it_fails_authorizing_when_cc_not_in_cache_giftcard(self):
         self.load_backend(True, 'dummygiftcard')
@@ -152,7 +163,7 @@ class BackendPaymentApiSpec(object):
         # Now processing fails.
         assert_raises(
             self.backend.WaitedTooLong,
-            self.process_payment, *(auth, ))
+            auth.process)
 
     def it_fails_purchasing_when_cc_not_in_cache_giftcard(self):
         self.load_backend(False, 'dummygiftcard')
@@ -165,7 +176,7 @@ class BackendPaymentApiSpec(object):
         # Now processing fails.
         assert_raises(
             self.backend.WaitedTooLong,
-            self.process_payment, *(auth, ))
+            auth.process)
 
     def it_fails_when_trying_to_authorize_debit(self):
         self.load_backend(True, 'dummydebit')
@@ -173,7 +184,7 @@ class BackendPaymentApiSpec(object):
         auth = self.prepare_payment(order, '30')
 
         # Now processing fails.
-        assert_raises(TransactionTypeNotSupported, self.process_payment, *(auth, ))
+        assert_raises(TransactionTypeNotSupported, auth.process)
 
     def it_fails_purchasing_when_cc_not_in_cache_debitcard(self):
         self.load_backend(False, 'dummydebit')
@@ -186,7 +197,7 @@ class BackendPaymentApiSpec(object):
         # Now processing fails.
         assert_raises(
             self.backend.WaitedTooLong,
-            self.process_payment, *(auth, ))
+            auth.process)
 
     def it_fails_when_backend_badly_implemented(self):
         class BadBackend(BaseBackend):
@@ -197,6 +208,25 @@ class BackendPaymentApiSpec(object):
         assert_raises(NotImplementedError, BadBackend(sample_conf).confirm, *(None, ))
         assert_raises(NotImplementedError, BadBackend(sample_conf).cancel, *(None, ))
         assert_raises(NotImplementedError, BadBackend(sample_conf).refund, *(None, ))
+
+    def it_doesnt_need_an_address_to_process_an_order(self):
+        self.load_backend(True)
+        order = get_order()
+        order.billing = None
+        order.shipping = None
+        self.prepare_payment(order, '15')
+        self.prepare_payment(order, '15')
+        order.payment.process_all_payments()
+        order.payment.capture_all_authorizations()
+        assert_equals(order.balance, decimal.Decimal('0'))
+        assert(order.is_prepared)
+        assert_equals(len(order.payment.get_payments()), 2)
+        assert_equals(order.payment.get_payment_sum(), decimal.Decimal('30'))
+        assert_equals(order.payment.get_prepared_amount(), decimal.Decimal('0'))
+        assert_equals(order.payment.get_captured_amount(), decimal.Decimal('30'))
+        assert_equals(order.payment.get_prepared_and_processed_payment_amount(), decimal.Decimal('30'))
+        assert_equals(order.payment.get_balance(), decimal.Decimal('0'))
+        assert_equals(order.payment.get_to_prepare_amount(), decimal.Decimal('0'))
 
     def can_prepare_preauth(self):
         self.load_backend(True)
@@ -216,7 +246,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(True)
         order = get_order()
         auth = self.prepare_payment(order, '30')
-        self.process_payment(auth)
+        auth.process()
         assert_equals(order.balance, decimal.Decimal('0'))
         assert(order.is_prepared)
         assert_equals(len(order.payment.get_payments()), 1)
@@ -310,7 +340,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(False)
         order = get_order()
         payment = self.prepare_payment(order, '30')
-        self.process_payment(payment)
+        payment.process()
         assert_equals(order.balance, decimal.Decimal('0'))
         assert(order.is_prepared)
         assert_equals(len(order.payment.get_payments()), 1)
@@ -339,7 +369,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(True, 'dummygiftcard')
         order = get_order()
         auth = self.prepare_payment(order, '30')
-        self.process_payment(auth)
+        auth.process()
         assert_equals(order.balance, decimal.Decimal('0'))
         assert(order.is_prepared)
         assert_equals(len(order.payment.get_payments()), 1)
@@ -433,7 +463,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(False, 'dummygiftcard')
         order = get_order()
         payment = self.prepare_payment(order, '30')
-        self.process_payment(payment)
+        payment.process()
         assert_equals(order.balance, decimal.Decimal('0'))
         assert(order.is_prepared)
         assert_equals(len(order.payment.get_payments()), 1)
@@ -448,7 +478,7 @@ class BackendPaymentApiSpec(object):
         self.load_backend(False, 'dummydebit')
         order = get_order()
         payment = self.prepare_payment(order, '30')
-        self.process_payment(payment)
+        payment.process()
         assert_equals(order.balance, decimal.Decimal('0'))
         assert(order.is_prepared)
         assert_equals(len(order.payment.get_payments()), 1)
