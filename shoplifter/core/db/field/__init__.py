@@ -1,10 +1,9 @@
 #encoding: utf-8
 
-from mongoengine.fields import DictField
-from mongoengine.base import ValidationError
-from mongoengine.base import BaseDict
+import decimal
 
-import re
+from mongoengine.fields import DictField, IntField
+from mongoengine.base import BaseDict
 
 
 class MissingLanguageFunctionError(Exception):
@@ -44,3 +43,28 @@ class TranslatedStringField(DictField):
         dict_items = instance._data.get(self.name, dict())
         trans_str = TranslatedString(dict_items, instance, self.name)
         return trans_str
+
+
+class MoneyField(IntField):
+    """
+    This is actually an integer field that stores the number of
+    cents. This can be used when we need to store precise money
+    amounts that cannot afford to lose precision.
+    Pros: This supports database operations like sum
+    """
+
+    def __init__(
+        self, min_value=None, max_value=None, decimal_digits=2, **kwargs):
+        self.min_value, self.max_value, self.decimal_digits = \
+            min_value, max_value, decimal_digits
+        super(MoneyField, self).__init__(**kwargs)
+
+    def aggregate_to_python(self, value):
+        return self.to_python(value)
+
+    def to_python(self, value):
+        return decimal.Decimal(str(value)) / (10 ** self.decimal_digits)
+
+    def to_mongo(self, value):
+        return int(
+            (value * (10 ** self.decimal_digits)).to_integral())

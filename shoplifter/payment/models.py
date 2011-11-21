@@ -1,7 +1,7 @@
 from mongoengine import IntField, BooleanField, StringField, \
     EmailField, DateTimeField, EmbeddedDocumentField, \
     ReferenceField, EmbeddedDocument, Document
-from shoplifter.payment.lib.fields import MoneyField
+from shoplifter.core.db.field import MoneyField
 from shoplifter.payment import plugins
 
 
