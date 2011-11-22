@@ -2,7 +2,7 @@
 
 from shoplifter.catalog.product.model import Product
 from tests.helpers import *
-from . import db
+from .. import db
 from .helpers import create_product
 
 

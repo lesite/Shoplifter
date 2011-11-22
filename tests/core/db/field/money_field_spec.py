@@ -1,12 +1,9 @@
 import decimal
 import mongoengine
-import pymongo
 from ....helpers import assert_is_instance
 
 from nose.tools import assert_equals
 from shoplifter.core.db.field import MoneyField
-
-mongoengine.connect('mongoenginetest')
 
 
 class HongZhiBi(mongoengine.Document):
@@ -25,7 +22,7 @@ class FiveDecPlacesDoc(mongoengine.Document):
 
 class MoneyFieldSpec(object):
     def get_db(self):
-        return pymongo.Connection('127.0.0.1').mongoenginetest
+        return mongoengine.connection._get_db()
 
     def get_original(self, mongoengineobj, coll):
         return self.get_db()[coll].find_one(id=mongoengineobj.id)

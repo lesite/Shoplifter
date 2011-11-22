@@ -12,9 +12,6 @@ from mongoengine.base import ValidationError
 from ludibrio import Stub
 
 
-db.connect(db='mongoenginetest')
-
-
 class TranslatedDoc(db.Document):
     text = TranslatedStringField()
 

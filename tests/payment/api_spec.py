@@ -12,8 +12,6 @@ from shoplifter.payment.backend.modules.dummy import TransactionTypeNotSupported
 
 from nose.tools import assert_equals, assert_raises
 
-mongoengine.connect('testdb6')
-
 
 def get_order(amount=decimal.Decimal('30')):
     return TestOrder(amount)

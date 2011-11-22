@@ -4,7 +4,7 @@ from nose.tools import *
 
 from shoplifter.catalog.product.model import Product, Variant
 
-from . import db
+from .. import db
 from .helpers import create_product, create_variant
 
 

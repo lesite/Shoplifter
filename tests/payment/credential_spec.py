@@ -10,9 +10,6 @@ from shoplifter.payment.lib.credentials import (
 from nose.tools import assert_equals, assert_raises
 
 
-mongoengine.connect('testdb6')
-
-
 class CredentialSpecs(TestCase):
     def setUp(self):
         config.cc_store_time = 60 * 5
