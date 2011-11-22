@@ -3,6 +3,7 @@
 import mongoengine as db
 
 from shoplifter.core import util
+from shoplifter.catalog.taxonomy.model import Taxonomy
 
 
 class Product(db.Document):
@@ -15,6 +16,8 @@ class Product(db.Document):
     meta_keywords = db.StringField()
 
     available_on = db.DateTimeField()
+
+    taxonomies = db.ListField(db.ReferenceField(Taxonomy))
 
     # taxclass
     # shipclass
