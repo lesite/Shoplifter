@@ -10,7 +10,7 @@ class MissingLanguageFunctionError(Exception):
     pass
 
 
-def get_lang():
+def get_lang(): # pragma: no cover
     raise MissingLanguageFunctionError
 
 
