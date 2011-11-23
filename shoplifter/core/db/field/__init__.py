@@ -12,7 +12,7 @@ class MissingLanguageFunctionError(Exception):
 
 
 def get_lang():
-    raise MissingLanguageFunctionError
+    raise MissingLanguageFunctionError  # pragma: no cover
 
 
 class TranslatedString(BaseDict):

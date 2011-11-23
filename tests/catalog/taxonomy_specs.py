@@ -71,19 +71,26 @@ class TestTaxonomySpec(object):
 		from mongoengine.document import OperationError
 		pants = Taxonomy.objects(name__en__iexact='pants')
 
-		assert_true(pants.count(), 2)
-		assert_true(pants[0].path != pants[1].path)
-		assert_true(pants[0].parent != pants[1].parent)
+		assert_true(pants, "The query have return a populated queryset")
+		assert_equal(pants.count(), 2, "The queryset have 2 items")
+		assert_true(pants[0].path != pants[1].path, "The items are unique")
 		pants2 = Taxonomy(name={'en': 'Pants'}, parent=self.men)
 		assert_raises(OperationError, pants2.save)
 
 	def test_multiple_taxonomies(self):
 		children = Taxonomy.objects.filter(parent=self.men)
-		assert_true(children.count(), 2)
+		assert_equal(children.count(), 2, 'The men category have 2 children')
 
 	def test_union_taxonomies(self):
-		prods = Product.objects(self.men | self.women)
-		assert_equal(prods.count(), 8)
+		all_prods = Product.objects(self.men | self.women)
+		men_tops = Taxonomy.objects.get(path='/men/tops')
+		men_pants = Taxonomy.objects.get(path='/men/pants')
+		men_prods = set(Product.objects(taxonomies__in=self.men.descendants))
+		men_prods2 = set(Product.objects(men_pants | men_tops))
+		assert_equal(all_prods.count(), 8,
+				'All root taxonomies return all the products')
+		assert_equal(men_prods2, men_prods,
+				'All children products are equal to parents products')
 
 	def test_intersect_taxonomies(self):
 		men = set(Product.objects(taxonomies__in=self.men.descendants))
@@ -92,9 +99,10 @@ class TestTaxonomySpec(object):
 		no_prods = Product.objects(self.men & self.women)
 		men_sales = Product.objects(self.men & self.sales)
 
-		assert_equal(len(men & women), no_prods.count())
-		assert_equal(len(men & sales), men_sales.count())
-		assert_equal(len(men_sales), 2)
+		assert_equal(set(men & women), set(no_prods),
+				'disjoint taxonomies provide no products')
+		assert_equal(set(men & sales), set(men_sales),
+				'parent and child is equal to parents products')
 
 	def test_substraction_taxonomies(self):
 		men = set(Product.objects(taxonomies__in=self.men.descendants))

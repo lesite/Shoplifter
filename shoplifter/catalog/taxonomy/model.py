@@ -26,12 +26,14 @@ class Taxonomy(db.Document):
 	parent = db.ReferenceField('self')
 	parents = db.ListField(db.ReferenceField('self'), default=list)
 
-	# @property
-	# def children(self):
-	# 	return Taxonomy.objects(parent=self)
+	meta = {
+		'indexes': ['path']
+	}
 	
 	@property
 	def descendants(self):
+		""" Returns all children of self including self
+		"""
 		return Taxonomy.objects(path__startswith=self.path)
 
 	@classmethod
@@ -50,24 +52,21 @@ class Taxonomy(db.Document):
 			document.path = u'/' + slug
 	
 	def __repr__(self):
-		return '<Taxonomy {} "{}">'.format(self.path, self.name)
+		return '<Taxonomy {} "{}">'.format(self.path,
+				self.name)  # pragma: no cover
 
 	def __or__(self, other):
+		""" Return query components that find products in either self or
+		other taxonomy
+		"""
 		taxonomies = ([self] + list(self.descendants.only('id')) + [other]
 				+ list(other.descendants.only('id')))
 		return db.Q(taxonomies__in=taxonomies)
 
 
 	def __and__(self, other):
-		"""Return query components that find products contained in both self
-		and another taxonomy.
-		
-		For example:
-			
-			pants = Taxonomy(name="Pants")
-			sale = Taxonomy(name="Sale")
-
-			pants & sale
+		""" Return query components that find products contained in both self
+		and other taxonomy.
 		"""
 		ours = list(self.descendants)
 		theirs = list(other.descendants)
@@ -76,6 +75,9 @@ class Taxonomy(db.Document):
 		return query
 	
 	def __sub__(self, other):
+		""" Return query components that find products contained in self and
+		not other taxonomy. 
+		"""
 		ours = list(self.descendants)
 		theirs = list(other.descendants)
 
