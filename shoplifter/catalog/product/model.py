@@ -3,18 +3,23 @@
 import mongoengine as db
 
 from shoplifter.core import util
+from shoplifter.catalog.taxonomy.model import Taxonomy
 
 
 class Product(db.Document):
-    code = db.StringField(primary_key=True, min_length=3, max_length=30, unique=True)
+    code = db.StringField(primary_key=True, min_length=3, max_length=30,
+            unique=True)
     name = db.StringField(required=True, min_length=3, max_length=255)
-    slug = db.StringField(required=True, min_length=3, max_length=30, unique=True)
+    slug = db.StringField(required=True, min_length=3, max_length=30,
+            unique=True)
 
     description = db.StringField()
     meta_description = db.StringField()
     meta_keywords = db.StringField()
 
     available_on = db.DateTimeField()
+
+    taxonomies = db.ListField(db.ReferenceField(Taxonomy))
 
     # taxclass
     # shipclass
@@ -34,6 +39,10 @@ class Product(db.Document):
         if not document.slug:
             document.slug = cls.slugify(document.name, limit=30)
 
+    def __repr__(self):
+        return '<Product {} "{}">'.format(self.code,
+                self.slug)  # pragma: no cover
+
 db.signals.pre_save.connect(Product.pre_save, sender=Product)
 
 
@@ -41,4 +50,5 @@ class Variant(db.Document):
     product = db.ReferenceField(Product, required=True,
                                 reverse_delete_rule=db.DENY)
 
-    sku = db.StringField(primary_key=True, min_length=3, max_length=100, unique=True)
+    sku = db.StringField(primary_key=True, min_length=3, max_length=100,
+            unique=True)
